@@ -99,3 +99,6 @@ venv.bak/
 # Pipfile
 Pipfile
 Pipfile.lock
+
+# Workspace
+.vscode
