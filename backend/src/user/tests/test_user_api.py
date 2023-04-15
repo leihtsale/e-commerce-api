@@ -1,30 +1,11 @@
-from rest_framework.test import APIClient
-from rest_framework import status
-
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-
+from rest_framework.test import APIClient
+from rest_framework import status
+from helpers.test_helpers import create_user
 
 CREATE_USER_URL = reverse('user:create')
-
-
-def create_user(
-        email='unique@email.com',
-        password='testpassword',
-        username='uniqueusername',
-        first_name='FirstName',
-        last_name='LastName'):
-    """
-    Helper function to create and return a user with default values
-    """
-    return get_user_model().objects.create_user(
-        email=email,
-        password=password,
-        username=username,
-        first_name=first_name,
-        last_name=last_name,
-    )
 
 
 class PublicUserApiTests(TestCase):

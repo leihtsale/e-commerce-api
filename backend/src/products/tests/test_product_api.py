@@ -2,9 +2,9 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 from core.models import Product
 from products import serializers
+from helpers.test_helpers import create_user
 
 
 PRODUCTS_URL = reverse('products:products-list')
@@ -26,21 +26,6 @@ def create_product(
     return Product.objects.create(
         user=user, name=name, price=price,
         inventory=inventory, total_sold=total_sold, **kwargs)
-
-
-def create_user(
-        email='test@email.com', password='testpass', username='testusername',
-        first_name='test firstname', last_name='test lastname'):
-    """
-    Helper function for creating a user
-    """
-    return get_user_model().objects.create_user(
-        email=email,
-        password=password,
-        username=username,
-        first_name=first_name,
-        last_name=last_name,
-    )
 
 
 class PublicProductApiTests(TestCase):
