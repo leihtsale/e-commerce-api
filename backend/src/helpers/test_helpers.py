@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from core.models import Product
 
 
 def create_user(
@@ -14,3 +15,14 @@ def create_user(
         first_name=first_name,
         last_name=last_name,
     )
+
+
+def create_product(
+        user, name="Generic product",
+        price=1, inventory=1, total_sold=0, **kwargs):
+    """
+    Helper function for creating a product
+    """
+    return Product.objects.create(
+        user=user, name=name, price=price,
+        inventory=inventory, total_sold=total_sold, **kwargs)
