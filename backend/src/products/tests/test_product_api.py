@@ -4,8 +4,10 @@ from rest_framework import status
 from django.urls import reverse
 from core.models import Product
 from products import serializers
-from helpers.test_helpers import create_user
-
+from helpers.test_helpers import (
+    create_user,
+    create_product
+)
 
 PRODUCTS_URL = reverse('products:products-list')
 
@@ -15,17 +17,6 @@ def detail_url(id):
     Helper function to return the url for a product with the params id
     """
     return reverse('products:products-detail', args=[id])
-
-
-def create_product(
-        user, name="Generic product",
-        price=1, inventory=1, total_sold=0, **kwargs):
-    """
-    Helper function for creating a product
-    """
-    return Product.objects.create(
-        user=user, name=name, price=price,
-        inventory=inventory, total_sold=total_sold, **kwargs)
 
 
 class PublicProductApiTests(TestCase):
