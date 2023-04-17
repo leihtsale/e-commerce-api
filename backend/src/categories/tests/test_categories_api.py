@@ -130,7 +130,7 @@ class PrivateCategoriesApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(current_count, initial_category_count + 1)
-        self.assertEqual(res.data['name'], payload['name'])
+        self.assertEqual(res.data['name'], payload['name'].lower())
 
     def test_create_category_with_normal_user(self):
         """
