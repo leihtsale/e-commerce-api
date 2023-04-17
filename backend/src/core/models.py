@@ -1,15 +1,10 @@
-from django.contrib.auth.models import (
-    BaseUserManager,
-    AbstractBaseUser,
-    PermissionsMixin,)
-from django.db import models
+from core.validators import alphanumeric, letters_only
 from django.conf import settings
-from django.core.validators import (
-    MinLengthValidator,
-    MinValueValidator,
-    MaxValueValidator,
-    EmailValidator,)
-from core.validators import letters_only, alphanumeric
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        PermissionsMixin)
+from django.core.validators import (EmailValidator, MaxValueValidator,
+                                    MinLengthValidator, MinValueValidator)
+from django.db import models
 
 
 class UserManager(BaseUserManager):
@@ -103,3 +98,33 @@ class Product(models.Model):
     class Meta:
         verbose_name = 'Product'
         verbose_name_plural = 'Products'
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='carts',
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='carts',
+    )
+    unit_price = models.PositiveIntegerField()
+    quantity = models.PositiveSmallIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def get_total(self):
+        return self.unit_price * self.quantity
+
+    def __str__(self):
+        return f"Cart | {self.product.name}"
+
+    def save(self, *args, **kwargs):
+        self.unit_price = self.product.price
+        super().save(*args, **kwargs)
+
+    class Meta:
+        unique_together = ('user', 'product')
