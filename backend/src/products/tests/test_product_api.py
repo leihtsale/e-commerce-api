@@ -1,13 +1,10 @@
-from django.test import TestCase
-from rest_framework.test import APIClient
-from rest_framework import status
-from django.urls import reverse
 from core.models import Product
-from products import serializers
-from helpers.test_helpers import (
-    create_user,
-    create_product
-)
+from django.test import TestCase
+from django.urls import reverse
+from helpers.test_helpers import create_category, create_product, create_user
+from products.serializers import ProductSerializer
+from rest_framework import status
+from rest_framework.test import APIClient
 
 PRODUCTS_URL = reverse('api:products-list')
 
@@ -25,13 +22,54 @@ class PublicProductApiTests(TestCase):
     """
     def setUp(self):
         self.client = APIClient()
+        self.user = create_user()
 
-    def test_fetching_products(self):
+    def test_list_products(self):
         """
-        Unauthenticated fetching of products
+        Fetching list of products
+        should return 200 - OK and return the list of products
+        """
+        for _ in range(5):
+            create_product(self.user)
+        products = Product.objects.all()
+        serialized_products = ProductSerializer(products, many=True)
+        res = self.client.get(PRODUCTS_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, serialized_products.data)
+
+    def test_fetching_single_product(self):
+        """
+        Fetching a single category
+        should return 200 - OK and return a single product
+        """
+        product = create_product(self.user)
+        serialized_product = ProductSerializer(product)
+        url = detail_url(product.id)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, serialized_product.data)
+
+    def test_updating_product(self):
+        """
+        Unauthenticated request to update a product
         should return 401 - Unauthorized
         """
-        res = self.client.get(PRODUCTS_URL)
+        product = create_product(self.user)
+        url = detail_url(product.id)
+        res = self.client.patch(url)
+
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_deleting_product(self):
+        """
+        Unauthenticated request to delete a product
+        should return 401 - Unauthorized
+        """
+        product = create_product(self.user)
+        url = detail_url(product.id)
+        res = self.client.delete(url)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -51,26 +89,40 @@ class PrivateProductApiTests(TestCase):
         )
         self.client.force_authenticate(self.user)
 
-    def test_fetching_products(self):
+    def test_list_products(self):
         """
-        Authenticated fetching of products
-        should return 200 - OK
-        and the list of products for the current user
+        Fetching list of products
+        should return 200 - OK and
+        return the list of products for the current user
         """
-        create_product(user=self.user)
+        for _ in range(5):
+            create_product(user=self.user)
+        products = Product.objects.all()
+        serialized_data = ProductSerializer(products, many=True)
         res = self.client.get(PRODUCTS_URL)
-        products = Product.objects.filter(user=self.user)
-        serialized_data = serializers.ProductSerializer(products, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serialized_data.data)
 
-    def test_creating_product(self):
+    def test_fetch_single_product(self):
         """
-        Authenticated creating of product
-        should return 201 - Created
-        and return the product data
+        Fetching a single product
+        should return 200 - OK and return a single product
         """
+        product = create_product(self.user)
+        serialized_product = ProductSerializer(product)
+        url = detail_url(product.id)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, serialized_product.data)
+
+    def test_create_product(self):
+        """
+        Creating a product
+        should return 201 - Created and return the product
+        """
+        initial_product_count = Product.objects.filter(user=self.user).count()
         payload = {
             'name': 'Generic product',
             'price': 1,
@@ -78,9 +130,57 @@ class PrivateProductApiTests(TestCase):
             'description': 'My description',
         }
         res = self.client.post(PRODUCTS_URL, payload)
+        current_count = Product.objects.filter(user=self.user).count()
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(current_count, initial_product_count + 1)
         self.assertEqual(res.data['name'], payload['name'])
+
+    def test_create_product_with_existing_category(self):
+        """
+        Creating a product and assigning an existing category
+        should return 201 - Created, creating the product
+        with the category assigned to it
+        """
+        create_category(name='Tech')
+        initial_products_count = Product.objects.filter(user=self.user).count()
+        payload = {
+            'name': 'Generic product',
+            'price': 1,
+            'inventory': 1,
+            'description': 'My description',
+            'categories': [{'name': 'Tech'}],
+        }
+        res = self.client.post(PRODUCTS_URL, payload, format='json')
+        product = Product.objects.filter(user=self.user).first()
+        serialized_product = ProductSerializer(product)
+        current_count = Product.objects.filter(user=self.user).count()
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(current_count, initial_products_count + 1)
+        self.assertEqual(res.data, serialized_product.data)
+
+        for category in payload['categories']:
+            c = product.categories.filter(name=category['name'].lower())
+            self.assertTrue(c.exists())
+
+    def test_create_product_with_nonexistent_category(self):
+        """
+        Attempt to add a nonexistent category on a product on create,
+        should return 400 - Bad Request
+        """
+        payload = {
+            'name': 'Generic product',
+            'price': 1,
+            'inventory': 1,
+            'description': 'My description',
+            'categories': [{'name': 'Tech'}],
+        }
+        res = self.client.post(PRODUCTS_URL, payload, format='json')
+        products = Product.objects.filter(user=self.user)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(products.exists())
 
     def test_creating_product_with_read_only_field(self):
         """
@@ -134,6 +234,40 @@ class PrivateProductApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data['name'], payload['name'])
         self.assertEqual(product.name, payload['name'])
+
+    def test_updating_product_with_existing_category(self):
+        """
+        Adding an existing category to a product
+        should return 200 - OK
+        """
+        create_category(name='Sample Category')
+        product = create_product(self.user)
+        payload = {
+            'categories': [{'name': 'sample Category'}]
+        }
+        url = detail_url(product.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        for category in payload['categories']:
+            c = product.categories.filter(name=category['name'].lower())
+            self.assertTrue(c.exists())
+
+    def test_updating_product_with_nonexistent_category(self):
+        """
+        Attempt to update a product by assigning a nonexistent category
+        should return 400 - Bad Request
+        """
+        product = create_product(self.user)
+        payload = {
+            'categories': [{'name': 'Nonexistent category'}]
+        }
+        url = detail_url(product.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(product.categories.exists())
 
     def test_updating_other_user_product(self):
         """
