@@ -1,11 +1,10 @@
+from core.models import Cart, Category, Product
 from django.contrib.auth import get_user_model
-from core.models import Product
-from core.models import Cart
 
 
 def create_user(
         email='test@email.com', password='testpass', username='testusername',
-        first_name='test firstname', last_name='test lastname'):
+        first_name='test firstname', last_name='test lastname', **kwargs):
     """
     Helper function for creating a user
     """
@@ -15,6 +14,7 @@ def create_user(
         username=username,
         first_name=first_name,
         last_name=last_name,
+        **kwargs,
     )
 
 
@@ -44,3 +44,7 @@ def create_carts(cart_user, product_user, count=2, quantity_per_cart_item=5):
         carts.append(cart)
 
     return carts
+
+
+def create_category(name='test category'):
+    return Category.objects.create(name=name)
