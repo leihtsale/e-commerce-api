@@ -1,5 +1,5 @@
-from rest_framework import serializers
 from core.models import Product
+from rest_framework import serializers
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -18,6 +18,12 @@ class ProductSerializer(serializers.ModelSerializer):
         }
 
     def to_internal_value(self, data):
+        """
+        This method raises an error if there is an attempt to update
+        a read_only field, instead of just ignoring it.
+
+        :raises: ValidationError
+        """
         for field_name, field in self.fields.items():
             if field.read_only and field_name in data:
                 raise serializers.ValidationError({
