@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from core.models import Product
+from core.models import Cart
 
 
 def create_user(
@@ -26,3 +27,20 @@ def create_product(
     return Product.objects.create(
         user=user, name=name, price=price,
         inventory=inventory, total_sold=total_sold, **kwargs)
+
+
+def create_carts(cart_user, product_user, count=2, quantity_per_cart_item=5):
+    """
+    Helper function for creating carts
+    """
+    carts = []
+    for _ in range(count):
+        product = create_product(product_user if product_user else cart_user)
+        cart = Cart.objects.create(
+            user=cart_user,
+            product=product,
+            quantity=quantity_per_cart_item,
+        )
+        carts.append(cart)
+
+    return carts
