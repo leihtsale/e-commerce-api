@@ -9,14 +9,14 @@ from helpers.test_helpers import (
     create_product
 )
 
-PRODUCTS_URL = reverse('products:products-list')
+PRODUCTS_URL = reverse('api:products-list')
 
 
 def detail_url(id):
     """
     Helper function to return the url for a product with the params id
     """
-    return reverse('products:products-detail', args=[id])
+    return reverse('api:products-detail', args=[id])
 
 
 class PublicProductApiTests(TestCase):
