@@ -26,14 +26,14 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, email, password, **kwargs):
+    def create_superuser(
+            self, email, password, username, first_name, last_name, **kwargs):
 
-        admin = self.create_user(email, password, **kwargs)
-        admin.is_staff = True
-        admin.is_superuser = True
-        admin.save()
+        kwargs.setdefault('is_staff', True)
+        kwargs.setdefault('is_superuser', True)
 
-        return admin
+        return self.create_user(
+            email, password, username, first_name, last_name, **kwargs)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -78,6 +78,7 @@ class Product(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
+    categories = models.ManyToManyField('Category')
     name = models.CharField(
         max_length=255,
         validators=[letters_only, MinLengthValidator(2)])
@@ -101,9 +102,13 @@ class Product(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=128, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        self.name = self.name.lower()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f'Category | {self.name}'
