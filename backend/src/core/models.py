@@ -5,6 +5,7 @@ from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
 from django.core.validators import (EmailValidator, MaxValueValidator,
                                     MinLengthValidator, MinValueValidator)
 from django.db import models
+from django.utils.text import slugify
 
 
 class UserManager(BaseUserManager):
@@ -82,8 +83,8 @@ class Product(models.Model):
     name = models.CharField(
         max_length=255,
         validators=[letters_only, MinLengthValidator(2)])
-    price = models.PositiveIntegerField()
-    inventory = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    inventory = models.PositiveIntegerField(default=0)
     description = models.TextField(default='')
     rating = models.PositiveSmallIntegerField(
         default=None,
@@ -103,11 +104,13 @@ class Product(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=128, unique=True)
+    slug = models.SlugField(unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         self.name = self.name.lower()
+        self.slug = slugify(self.name)
         return super().save(*args, **kwargs)
 
     def __str__(self):
@@ -125,7 +128,7 @@ class Cart(models.Model):
         on_delete=models.CASCADE,
         related_name='carts',
     )
-    unit_price = models.PositiveIntegerField()
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     quantity = models.PositiveSmallIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -142,3 +145,30 @@ class Cart(models.Model):
 
     class Meta:
         unique_together = ('user', 'product')
+
+
+class Order(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+    shipping_info = models.JSONField()
+    billing_info = models.JSONField()
+    is_cancelled = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Order | {self.user}"
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
+    quantity = models.PositiveSmallIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Order | {self.product} | {self.user}"
