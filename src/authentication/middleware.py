@@ -37,7 +37,8 @@ class AutoRefreshMiddleware:
                 access_token_obj.payload.get('exp') -
                 int(datetime.now().timestamp())
             )
-            # Refresh the token if its remaining lifetime is less than a specified threshold
+            # Refresh the token if its remaining lifetime is
+            # less than a specified threshold
             refresh_threshold = 60  # Set the threshold in seconds
             if token_remaining_lifetime <= refresh_threshold:
                 new_access_token = refresh_token_obj.access_token

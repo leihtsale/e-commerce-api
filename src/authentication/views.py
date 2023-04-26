@@ -1,6 +1,7 @@
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.settings import api_settings
 
+
 class CookieTokenObtainView(TokenObtainPairView):
     def finalize_response(self, request, response, *args, **kwargs):
         if response.status_code == 200:

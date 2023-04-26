@@ -76,14 +76,16 @@ class AuthenticationTokenApiTests(TestCase):
         decoded_payload['exp'] = int(
             datetime.now().timestamp()) + short_lifetime.seconds
 
-        # Re-encode the modified payload
-        initial_cookie_with_short_lifetime = jwt.encode(
+        # Re-encode the modified payload, initial cookie
+        # with short lifetime
+        initial_cookie = jwt.encode(
             decoded_payload, settings.SECRET_KEY, algorithm='HS256')
 
         # Set the modified access token to the client's cookies
-        self.client.cookies['access_token'] = initial_cookie_with_short_lifetime
+        self.client.cookies['access_token'] = initial_cookie
 
-        # Test to fetch from a procted url, or a view that requires authentication
+        # Test to fetch from a procted url, or a
+        # view that requires authentication
         response = self.client.get(SAMPLE_PROTECTED_URL)
 
         # Check if the access_token cookie is set in the response
@@ -108,7 +110,6 @@ class AuthenticationTokenApiTests(TestCase):
 
         response = self.client.get(SAMPLE_PROTECTED_URL)
         current_token = self.client.cookies.get('access_token').value
-
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(current_token, initial_access_token)
