@@ -13,6 +13,6 @@ router.registry.extend(orders_router.registry)
 
 urlpatterns = [
     path('user/', include('user.urls')),
-    path('token/', include('auth_token.urls')),
+    path('token/', include('authentication.urls')),
     path('', include((router.urls, 'api')))
 ]
