@@ -1,12 +1,13 @@
+from rest_framework import permissions, viewsets
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from carts.serializers import CartDetailSerializer, CartSerializer
 from core.models import Cart
-from rest_framework import permissions, viewsets
-from rest_framework.authentication import TokenAuthentication
 
 
 class CartViewSet(viewsets.ModelViewSet):
     serializer_class = CartDetailSerializer
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ['get', 'post', 'head', 'options', 'patch', 'delete']
 

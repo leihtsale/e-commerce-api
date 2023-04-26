@@ -1,12 +1,13 @@
-from rest_framework.authentication import TokenAuthentication
-from rest_framework import viewsets, permissions
+from rest_framework import permissions, viewsets
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from core.models import Product
-from . import serializers
+from products.serializers import ProductSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    serializer_class = serializers.ProductSerializer
-    authentication_classes = [TokenAuthentication]
+    serializer_class = ProductSerializer
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):

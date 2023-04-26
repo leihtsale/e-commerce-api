@@ -1,12 +1,13 @@
+from rest_framework import permissions, viewsets
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from core.models import Order, OrderItem
 from orders.serializers import OrderItemSerialzer, OrderSerializer
-from rest_framework import permissions, viewsets
-from rest_framework.authentication import TokenAuthentication
 
 
 class OrdersViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
