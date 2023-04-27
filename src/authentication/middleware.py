@@ -25,27 +25,35 @@ class AutoRefreshMiddleware:
         # Extract the access and refresh tokens from the request cookies
         access_token = request.COOKIES.get('access_token')
         refresh_token = request.COOKIES.get('refresh_token')
+        access_token_lifetime = api_settings.ACCESS_TOKEN_LIFETIME
 
-        # Check if the tokens are available and need refreshing
-        if access_token and refresh_token:
+        if refresh_token:
             refresh_token_obj = RefreshToken(refresh_token)
-            access_token_obj = AccessToken(access_token)
-            access_token_lifetime = api_settings.ACCESS_TOKEN_LIFETIME
 
-            # Calculate the token's remaining lifetime
-            token_remaining_lifetime = (
-                access_token_obj.payload.get('exp') -
-                int(datetime.now().timestamp())
-            )
-            # Refresh the token if its remaining lifetime is
-            # less than a specified threshold
-            refresh_threshold = 60  # Set the threshold in seconds
-            if token_remaining_lifetime <= refresh_threshold:
+            if not access_token:
                 new_access_token = refresh_token_obj.access_token
                 response.set_cookie(
                     'access_token', str(new_access_token),
                     httponly=True,
                     max_age=access_token_lifetime.seconds,
                 )
+            elif access_token:
+                access_token_obj = AccessToken(access_token)
+
+                # Calculate the token's remaining lifetime
+                token_remaining_lifetime = (
+                    access_token_obj.payload.get('exp') -
+                    int(datetime.now().timestamp())
+                )
+                # Refresh the token if its remaining lifetime is
+                # less than a specified threshold
+                refresh_threshold = 60  # Set the threshold in seconds
+                if token_remaining_lifetime <= refresh_threshold:
+                    new_access_token = refresh_token_obj.access_token
+                    response.set_cookie(
+                        'access_token', str(new_access_token),
+                        httponly=True,
+                        max_age=access_token_lifetime.seconds,
+                    )
 
         return response
