@@ -2,12 +2,13 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class CookieTokenObtainView(TokenObtainPairView):
+
     def finalize_response(self, request, response, *args, **kwargs):
         if response.status_code == 200:
             access_token = response.data.pop('access')
@@ -26,6 +27,7 @@ class CookieTokenObtainView(TokenObtainPairView):
 
 
 class CheckAuthenticationView(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -39,3 +41,13 @@ class CheckAuthenticationView(APIView):
 
         }
         return Response(context, status=status.HTTP_200_OK)
+
+
+class LogoutView(APIView):
+
+    def post(self, request):
+        response = Response({"detail": "Logout successful"},
+                            status=status.HTTP_200_OK)
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+        return response
