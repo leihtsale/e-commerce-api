@@ -1,25 +1,32 @@
-from core.models import Product
 from django.test import TestCase
 from django.urls import reverse
-from helpers.test_helpers import create_category, create_product, create_user
-from products.serializers import ProductSerializer
 from rest_framework import status
 from rest_framework.test import APIClient
 
-PRODUCTS_URL = reverse('api:products-list')
+from core.models import Product
+from helpers.test_helpers import create_category, create_product, create_user
+from products.serializers import ProductSerializer
+
+PRODUCTS_URL = reverse('products:products-list')
+PUBLIC_PRODUCTS_URL = reverse('products:public-list')
 
 
-def detail_url(id):
+def public_detail_url(id):
     """
     Helper function to return the url for a product with the params id
     """
-    return reverse('api:products-detail', args=[id])
+    return reverse('products:public-retrieve', args=[id])
+
+
+def detail_url(id):
+    return reverse('products:products-detail', args=[id])
 
 
 class PublicProductApiTests(TestCase):
     """
     Tests for unauthenticated Product API calls
     """
+
     def setUp(self):
         self.client = APIClient()
         self.user = create_user()
@@ -33,7 +40,7 @@ class PublicProductApiTests(TestCase):
             create_product(self.user)
         products = Product.objects.all()
         serialized_products = ProductSerializer(products, many=True)
-        res = self.client.get(PRODUCTS_URL)
+        res = self.client.get(PUBLIC_PRODUCTS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serialized_products.data)
@@ -45,11 +52,11 @@ class PublicProductApiTests(TestCase):
         """
         product = create_product(self.user)
         serialized_product = ProductSerializer(product)
-        url = detail_url(product.id)
+        url = public_detail_url(product.id)
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serialized_product.data)
+        self.assertEqual(dict(res.data[0]), serialized_product.data)
 
     def test_updating_product(self):
         """
@@ -78,6 +85,7 @@ class PrivateProductApiTests(TestCase):
     """
     Tests for authenticated Product API calls
     """
+
     def setUp(self):
         self.client = APIClient()
         self.user = create_user(

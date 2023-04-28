@@ -1,4 +1,4 @@
-from rest_framework import permissions, viewsets
+from rest_framework import generics, permissions, viewsets
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from core.models import Product
@@ -10,15 +10,15 @@ class ProductViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_permissions(self):
-        if (self.action == 'list' or self.action == 'retrieve'):
-            return [permissions.AllowAny()]
-        return super().get_permissions()
-
     def get_queryset(self):
-        if (self.action == 'list' or self.action == 'retrieve'):
-            return Product.objects.all()
         return Product.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class PublicProductView(
+        generics.ListAPIView,
+        generics.RetrieveAPIView):
+    serializer_class = ProductSerializer
+    queryset = Product.objects.all()
