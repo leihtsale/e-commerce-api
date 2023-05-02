@@ -1,4 +1,5 @@
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, views, viewsets
+from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from carts.serializers import CartDetailSerializer, CartSerializer
@@ -21,3 +22,12 @@ class CartViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class CartCountView(views.APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        count = Cart.objects.filter(user=request.user).count()
+        return Response({'count': count}, status=200)

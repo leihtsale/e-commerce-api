@@ -1,25 +1,27 @@
-from carts.serializers import CartSerializer
-from core.models import Cart
 from django.test import TestCase
 from django.urls import reverse
-from helpers.test_helpers import create_carts, create_product, create_user
 from rest_framework import status
 from rest_framework.test import APIClient
 
-CARTS_URL = reverse('api:carts-list')
+from carts.serializers import CartSerializer
+from core.models import Cart
+from helpers.test_helpers import create_carts, create_product, create_user
+
+CARTS_URL = reverse('carts:carts-list')
 
 
 def detail_url(id):
     """
     Helper function to return the url for a product with the params id
     """
-    return reverse('api:carts-detail', args=[id])
+    return reverse('carts:carts-detail', args=[id])
 
 
 class PublicCartsApiTests(TestCase):
     """
     Tests for unauthenticated carts api requests
     """
+
     def setUp(self):
         self.client = APIClient()
 
@@ -37,6 +39,7 @@ class PrivateCartsApiTests(TestCase):
     """
     Tests for authenticated carts api request
     """
+
     def setUp(self):
         self.client = APIClient()
         self.user = create_user(
@@ -75,7 +78,7 @@ class PrivateCartsApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertTrue(carts.exists())
-        self.assertEqual(res.data, serialized_carts.data)
+        self.assertEqual(res.data['results'], serialized_carts.data)
 
     def test_creating_cart(self):
         """
@@ -85,12 +88,13 @@ class PrivateCartsApiTests(TestCase):
         product = create_product(self.seller)
         payload = {
             'product': product.id,
-            'quantity': 2,
+            'quantity': 1,
         }
         initial_cart_count = Cart.objects.filter(user=self.user).count()
         res = self.client.post(CARTS_URL, payload)
 
         current_user_cart = Cart.objects.filter(user=self.user)
+
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(current_user_cart.count(), initial_cart_count + 1)
 

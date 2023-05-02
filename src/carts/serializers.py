@@ -1,19 +1,23 @@
-from core.models import Cart
 from rest_framework import serializers
+
+from core.models import Cart
 
 
 class CartSerializer(serializers.ModelSerializer):
 
     total = serializers.SerializerMethodField()
+    product_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
         fields = [
-            'user', 'product', 'unit_price', 'total',
-            'quantity', 'created_at', 'updated_at'
+            'id', 'user', 'product', 'product_name', 'unit_price',
+            'total', 'quantity', 'created_at', 'updated_at'
         ]
         extra_kwargs = {
+            'id': {'read_only': True},
             'user': {'read_only': True},
+            'product_name': {'read_only': True},
             'unit_price': {'read_only': True},
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True},
@@ -25,6 +29,21 @@ class CartSerializer(serializers.ModelSerializer):
         on the unit price and quantity.
         """
         return instance.get_total()
+
+    def get_product_name(self, instance):
+        """
+        Return the product name of the cart item.
+        """
+        return instance.product.name
+
+    def validate(self, attrs):
+        product = attrs.get('product')
+        quantity = attrs.get('quantity')
+
+        if (product.inventory < quantity):
+            raise serializers.ValidationError('Insufficient inventory')
+
+        return attrs
 
 
 class CartDetailSerializer(CartSerializer):
