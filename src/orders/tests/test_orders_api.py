@@ -1,11 +1,12 @@
-from core.models import Order
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient
+
+from core.models import Order
 from helpers.test_helpers import (create_carts, create_order,
                                   create_order_item, create_user)
 from orders.serializers import OrderSerializer
-from rest_framework import status
-from rest_framework.test import APIClient
 
 ORDERS_URL = reverse('api:orders-list')
 
@@ -21,6 +22,7 @@ class PublicOrdersApiTests(TestCase):
     """
     Tests for unauthenticated order api calls
     """
+
     def setUp(self):
         self.client = APIClient()
         self.user = create_user()
@@ -61,21 +63,11 @@ class PrivateOrdersApiTests(TestCase):
     """
     Tests for authenticated orders api requests
     """
+
     def setUp(self):
         self.client = APIClient()
         self.user = create_user()
         self.client.force_authenticate(self.user)
-        self.sample_billing_info = {
-            'first_name': self.user.first_name,
-            'last_name': self.user.last_name,
-            'address': 'Some address',
-            'city': 'some city',
-            'zipcode': 3021,
-            'card': '1234',
-            'security_code': 202,
-            'expiration_month': 2,
-            'expiration_year': 2025,
-        }
         self.sample_shipping_info = {
             'first_name': self.user.first_name,
             'last_name': self.user.last_name,
@@ -98,7 +90,7 @@ class PrivateOrdersApiTests(TestCase):
         res = self.client.get(ORDERS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serialized_orders.data)
+        self.assertEqual(res.data['results'], serialized_orders.data)
 
     def test_fetch_single_order(self):
         """
@@ -123,7 +115,6 @@ class PrivateOrdersApiTests(TestCase):
         payload = {
             'cart_ids': [cart.id for cart in carts],
             'shipping_info': self.sample_shipping_info,
-            'billing_info': self.sample_billing_info
         }
         res = self.client.post(ORDERS_URL, payload, format='json')
         current_count = Order.objects.filter(user=self.user).count()
@@ -141,7 +132,6 @@ class PrivateOrdersApiTests(TestCase):
         payload = {
             'cart_ids': [cart.id for cart in carts],
             'shipping_info': self.sample_shipping_info,
-            'billing_info': self.sample_billing_info
         }
         res = self.client.post(ORDERS_URL, payload, format='json')
         current_count = Order.objects.filter(user=self.user).count()
@@ -171,7 +161,6 @@ class PrivateOrdersApiTests(TestCase):
         payload = {
             'cart_ids': [cart.id for cart in carts],
             'shipping_info': self.sample_shipping_info,
-            'billing_info': self.sample_billing_info
         }
         res = self.client.post(ORDERS_URL, payload, format='json')
         current_count = Order.objects.filter(user=self.user).count()

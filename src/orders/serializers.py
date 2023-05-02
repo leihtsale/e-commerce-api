@@ -1,5 +1,6 @@
-from core.models import Cart, Order, OrderItem
 from rest_framework import serializers
+
+from core.models import Cart, Order, OrderItem
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -9,17 +10,22 @@ class OrderSerializer(serializers.ModelSerializer):
         write_only=True
     )
 
+    total = serializers.SerializerMethodField('get_total')
+
     class Meta:
         model = Order
         fields = [
-            'id', 'user', 'cart_ids', 'shipping_info', 'billing_info',
-            'is_cancelled', 'created_at', 'updated_at']
+            'id', 'user', 'cart_ids', 'shipping_info',
+            'status', 'is_cancelled', 'total', 'created_at', 'updated_at']
         extra_kwargs = {
             'id': {'read_only': True},
             'user': {'read_only': True},
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True},
         }
+
+    def get_total(self, instance):
+        return instance.get_total()
 
     def _get_carts(self, cart_ids):
         carts = []
@@ -89,16 +95,20 @@ class OrderSerializer(serializers.ModelSerializer):
                 product.total_sold -= order_item.quantity
                 product.save()
 
-            return super().update(instance, validated_data)
+        instance = super().update(instance, validated_data)
+        return instance
 
 
 class OrderItemSerialzer(serializers.ModelSerializer):
 
+    product_name = serializers.SerializerMethodField('get_product_name')
+    total = serializers.SerializerMethodField('get_total')
+
     class Meta:
         model = OrderItem
         fields = [
-            'order', 'product', 'unit_price',
-            'quantity', 'created_at', 'updated_at']
+            'order', 'product', 'product_name', 'unit_price',
+            'quantity', 'total', 'created_at', 'updated_at']
         extra_kwargs = {
             'order': {'read_only': True},
             'product': {'read_only': True},
@@ -107,3 +117,9 @@ class OrderItemSerialzer(serializers.ModelSerializer):
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True},
         }
+
+    def get_product_name(self, instance):
+        return instance.get_product_name()
+
+    def get_total(self, instance):
+        return instance.get_total()
