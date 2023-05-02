@@ -9,7 +9,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 CREATE_TOKEN_URL = reverse('token:create')
-SAMPLE_PROTECTED_URL = reverse('api:carts-list')
+SAMPLE_PROTECTED_URL = reverse('carts:carts-list')
 
 
 class AuthenticationTokenApiTests(TestCase):

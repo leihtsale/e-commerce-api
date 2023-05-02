@@ -31,16 +31,20 @@ class CheckAuthenticationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        context = {
-            'is_authenticated': True,
-            'id': request.user.id,
-            'email': request.user.email,
-            'username': request.user.username,
-            'first_name': request.user.first_name,
-            'last_name': request.user.last_name,
 
-        }
-        return Response(context, status=status.HTTP_200_OK)
+        if (request.user):
+            context = {
+                'is_authenticated': True,
+                'id': request.user.id,
+                'email': request.user.email,
+                'username': request.user.username,
+                'first_name': request.user.first_name,
+                'last_name': request.user.last_name,
+
+            }
+            return Response(context, status=status.HTTP_200_OK)
+        return Response({'Unauthorized: Please login.'},
+                        status=status.HTTP_401_UNAUTHORIZED)
 
 
 class LogoutView(APIView):
