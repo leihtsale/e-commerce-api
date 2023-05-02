@@ -43,7 +43,7 @@ class PublicProductApiTests(TestCase):
         res = self.client.get(PUBLIC_PRODUCTS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serialized_products.data)
+        self.assertEqual(res.data['results'], serialized_products.data)
 
     def test_fetching_single_product(self):
         """
@@ -56,7 +56,7 @@ class PublicProductApiTests(TestCase):
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(dict(res.data[0]), serialized_product.data)
+        self.assertEqual(res.data, serialized_product.data)
 
     def test_updating_product(self):
         """
@@ -110,7 +110,7 @@ class PrivateProductApiTests(TestCase):
         res = self.client.get(PRODUCTS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serialized_data.data)
+        self.assertEqual(res.data['results'], serialized_data.data)
 
     def test_fetch_single_product(self):
         """
@@ -157,7 +157,7 @@ class PrivateProductApiTests(TestCase):
             'price': 1,
             'inventory': 1,
             'description': 'My description',
-            'categories': [{'name': 'Tech'}],
+            'categories': ['Tech'],
         }
         res = self.client.post(PRODUCTS_URL, payload, format='json')
         product = Product.objects.filter(user=self.user).first()
@@ -169,7 +169,7 @@ class PrivateProductApiTests(TestCase):
         self.assertEqual(res.data, serialized_product.data)
 
         for category in payload['categories']:
-            c = product.categories.filter(name=category['name'].lower())
+            c = product.categories.filter(name=category.lower())
             self.assertTrue(c.exists())
 
     def test_create_product_with_nonexistent_category(self):
@@ -182,7 +182,7 @@ class PrivateProductApiTests(TestCase):
             'price': 1,
             'inventory': 1,
             'description': 'My description',
-            'categories': [{'name': 'Tech'}],
+            'categories': ['Tech'],
         }
         res = self.client.post(PRODUCTS_URL, payload, format='json')
         products = Product.objects.filter(user=self.user)
@@ -249,17 +249,18 @@ class PrivateProductApiTests(TestCase):
         should return 200 - OK
         """
         create_category(name='Sample Category')
+        create_category(name='Sample')
+
         product = create_product(self.user)
         payload = {
-            'categories': [{'name': 'sample Category'}]
+            'categories': ['sample category', 'sample'],
         }
         url = detail_url(product.id)
         res = self.client.patch(url, payload, format='json')
-
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         for category in payload['categories']:
-            c = product.categories.filter(name=category['name'].lower())
+            c = product.categories.filter(name=category.lower())
             self.assertTrue(c.exists())
 
     def test_updating_product_with_nonexistent_category(self):
@@ -269,7 +270,7 @@ class PrivateProductApiTests(TestCase):
         """
         product = create_product(self.user)
         payload = {
-            'categories': [{'name': 'Nonexistent category'}]
+            'categories': ['Nonexistent category']
         }
         url = detail_url(product.id)
         res = self.client.patch(url, payload, format='json')
