@@ -1,4 +1,7 @@
-from core.validators import alphanumeric, letters_only
+import os
+import uuid
+from decimal import Decimal
+
 from django.conf import settings
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         PermissionsMixin)
@@ -6,6 +9,19 @@ from django.core.validators import (EmailValidator, MaxValueValidator,
                                     MinLengthValidator, MinValueValidator)
 from django.db import models
 from django.utils.text import slugify
+from PIL import Image
+
+from core.validators import alphanumeric, letters_only
+
+
+def product_image_file_path(image, filename):
+    """
+    Generate a UUID file path for an uploaded image
+    """
+    extension = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{extension}'
+
+    return os.path.join('uploads', 'product', filename)
 
 
 class UserManager(BaseUserManager):
@@ -82,17 +98,28 @@ class Product(models.Model):
     categories = models.ManyToManyField('Category')
     name = models.CharField(
         max_length=255,
-        validators=[letters_only, MinLengthValidator(2)])
+        validators=[MinLengthValidator(2)])
     price = models.DecimalField(max_digits=12, decimal_places=2)
     inventory = models.PositiveIntegerField(default=0)
     description = models.TextField(default='')
-    rating = models.PositiveSmallIntegerField(
-        default=None,
+    rating = models.DecimalField(
+        max_digits=3, decimal_places=1,
+        default=0,
         null=True,
         validators=[MinValueValidator(0), MaxValueValidator(5)])
     total_sold = models.PositiveIntegerField(default=0)
+    image = models.ImageField(null=True, upload_to=product_image_file_path)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.image:
+            img = Image.open(self.image.path)
+            max_size = (600, 600)
+            img.thumbnail(max_size, Image.ANTIALIAS)
+            img.save(self.image.path)
 
     def __str__(self):
         return self.name
@@ -116,6 +143,9 @@ class Category(models.Model):
     def __str__(self):
         return f'Category | {self.name}'
 
+    class Meta:
+        verbose_name_plural = 'Categories'
+
 
 class Cart(models.Model):
     user = models.ForeignKey(
@@ -134,7 +164,7 @@ class Cart(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def get_total(self):
-        return self.unit_price * self.quantity
+        return Decimal(self.unit_price * self.quantity)
 
     def __str__(self):
         return f"Cart | {self.product.name}"
@@ -148,22 +178,43 @@ class Cart(models.Model):
 
 
 class Order(models.Model):
+    PENDING = 'pending'
+    PAID = 'paid'
+    CANCELLED = 'cancelled'
+
+    ORDER_STATUS_CHOICES = (
+        (PENDING, 'Pending'),
+        (PAID, 'Paid'),
+        (CANCELLED, 'Cancelled'),
+    )
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
-    shipping_info = models.JSONField()
-    billing_info = models.JSONField()
-    is_cancelled = models.BooleanField(default=False)
+    shipping_info = models.JSONField(null=True, blank=True)
+    is_cancelled = models.BooleanField(null=True, blank=True, default=False)
+    status = models.CharField(
+        max_length=20, choices=ORDER_STATUS_CHOICES, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Order | {self.user}"
 
+    def get_total(self):
+        total = 0
+        order_items = self.order_items.all()
+
+        for item in order_items:
+            total += item.get_total()
+
+        return total
+
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name='order_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     quantity = models.PositiveSmallIntegerField(default=1)
@@ -172,3 +223,9 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"Order | {self.product} | {self.user}"
+
+    def get_product_name(self):
+        return self.product.name
+
+    def get_total(self):
+        return self.quantity * self.unit_price
