@@ -1,5 +1,6 @@
-from core.models import Cart, Category, Order, OrderItem, Product
 from django.contrib.auth import get_user_model
+
+from core.models import Cart, Category, Order, OrderItem, Product
 
 
 def create_user(
@@ -78,23 +79,7 @@ def create_order(user, shipping_info={}, billing_info={}):
             },
         }
 
-    if not billing_info:
-        billing_info = {
-            'billing_info': {
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'address': 'Some address',
-                'city': 'some city',
-                'zipcode': 3021,
-                'card': '1234',
-                'security_code': 202,
-                'expiration_month': 2,
-                'expiration_year': 2025,
-            },
-        }
-
     return Order.objects.create(
         user=user,
         shipping_info=shipping_info,
-        billing_info=billing_info,
     )
