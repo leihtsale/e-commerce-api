@@ -33,7 +33,7 @@ class PublicCategoriesApiTests(TestCase):
         res = self.client.get(CATEGORIES_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serialized_categories.data)
+        self.assertEqual(res.data['results'], serialized_categories.data)
 
     def test_fetch_single_category(self):
         """
@@ -100,7 +100,7 @@ class PrivateCategoriesApiTests(TestCase):
         res = self.client.get(CATEGORIES_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serialized_categories.data)
+        self.assertEqual(res.data['results'], serialized_categories.data)
 
     def test_fetch_single_category(self):
         """
