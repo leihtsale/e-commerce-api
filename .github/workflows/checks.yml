@@ -24,6 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Test
-        run: docker-compose run --rm api sh -c "python manage.py wait_for_db && python manage.py test"
+        run: docker-compose run -e STRIPE_SECRET_KEY -e STRIPE_PUBLIC_KEY -e STRIPE_WEBHOOK_SECRET -e PAYMENT_SUCCESS_URL -e ORIGINS -e ALLOWED_HOSTS --rm api sh -c "python manage.py wait_for_db && python manage.py test"
       - name: Lint
         run: docker-compose run --rm api sh -c "flake8"
