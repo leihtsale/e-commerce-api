@@ -1,3 +1,6 @@
+"""
+Centralized route configs for apps
+"""
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
