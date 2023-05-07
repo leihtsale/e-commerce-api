@@ -21,7 +21,7 @@ def create_user(
 
 def create_product(
         user, name="Generic product",
-        price=1, inventory=1, total_sold=0, **kwargs):
+        price=50, inventory=1, total_sold=0, **kwargs):
     """
     Helper function for creating a product
     """
