@@ -1,8 +1,3 @@
-from datetime import datetime
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-from rest_framework_simplejwt.settings import api_settings
-
-
 class AddBearerMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response

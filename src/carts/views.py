@@ -1,8 +1,7 @@
-from rest_framework import permissions, views, viewsets
+from rest_framework import permissions, status, views, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework import status
-from django.db.utils import IntegrityError
+
 from carts.serializers import CartDetailSerializer, CartSerializer
 from core.models import Cart
 

@@ -90,7 +90,8 @@ class PrivateOrdersApiTests(TestCase):
         res = self.client.get(ORDERS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(sorted(res.data['results'], key=lambda x: x['id']), sorted(serialized_orders.data, key=lambda x: x['id']))
+        self.assertEqual(sorted(res.data['results'], key=lambda x: x['id']),
+                         sorted(serialized_orders.data, key=lambda x: x['id']))
 
     def test_fetch_single_order(self):
         """

@@ -7,7 +7,8 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status, views
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.authentication import (
+    JWTAuthentication)
 
 from core.models import Order, OrderItem, Product
 from orders.serializers import OrderSerializer
@@ -63,14 +64,17 @@ class DirectCheckoutSession(views.APIView):
         try:
             product = Product.objects.get(pk=product_id)
         except Product.DoesNotExist:
-            return Response({'error': 'Product does not exists.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Product does not exists.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         if quantity <= product.inventory and quantity > 0:
 
             with transaction.atomic():
                 try:
                     order = Order.objects.create(
-                        user=user, shipping_info=shipping_info, status=Order.PENDING)
+                        user=user,
+                        shipping_info=shipping_info,
+                        status=Order.PENDING)
 
                     order_item = OrderItem.objects.create(
                         order=order, product=product,
@@ -167,8 +171,9 @@ def create_stripe_checkout(line_items, order_id):
             },
             success_url=settings.PAYMENT_SUCCESS_URL
         )
-    except Exception as e:
-        return status.HTTP_500_INTERNAL_SERVER_ERROR, f'Something went wrong.'
+    except Exception:
+        return (status.HTTP_500_INTERNAL_SERVER_ERROR,
+                'Something went wrong.')
 
     Order.objects.filter(id=order_id).update(
         stripe_checkout_session_id=checkout_session.id)
@@ -181,8 +186,8 @@ def handle_successful_payment(session):
     try:
         order = Order.objects.get(id=order_id)
     except Order.DoesNotExist:
-        return status.HTTP_404_NOT_FOUND, f'Order with ID {order_id} does not exist'
-
+        return (status.HTTP_404_NOT_FOUND,
+                f'Order with ID {order_id} does not exist',)
     serializer = OrderSerializer(
         order, data={'status': Order.PAID}, partial=True)
 
@@ -190,4 +195,5 @@ def handle_successful_payment(session):
         serializer.save()
         return status.HTTP_200_OK, ''
     else:
-        return status.HTTP_400_BAD_REQUEST, f'Failed to update Order with ID {order_id}.'
+        return (status.HTTP_400_BAD_REQUEST,
+                f'Failed to update Order with ID {order_id}.',)
