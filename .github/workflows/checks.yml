@@ -3,6 +3,14 @@ name: Checks
 
 on: [push]
 
+env:
+  STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+  STRIPE_PUBLIC_KEY: ${{ secrets.STRIPE_PUBLIC_KEY }}
+  STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+  PAYMENT_SUCCESS_URL: ${{ secrets.PAYMENT_SUCCESS_URL }}
+  ORIGINS: ${{ secrets.ORIGINS }}
+  ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+
 jobs:
   test-lint:
     name: Test and Lint
