@@ -99,14 +99,11 @@ class Product(models.Model):
     name = models.CharField(
         max_length=255,
         validators=[MinLengthValidator(2)])
-    price = models.DecimalField(max_digits=12, decimal_places=2)
-    inventory = models.PositiveIntegerField(default=0)
+    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[
+                                MinValueValidator(50)])
+    inventory = models.PositiveIntegerField(
+        default=0, validators=[MinValueValidator(1)])
     description = models.TextField(default='')
-    rating = models.DecimalField(
-        max_digits=3, decimal_places=1,
-        default=0,
-        null=True,
-        validators=[MinValueValidator(0), MaxValueValidator(5)])
     total_sold = models.PositiveIntegerField(default=0)
     image = models.ImageField(null=True, upload_to=product_image_file_path)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -127,6 +124,25 @@ class Product(models.Model):
     class Meta:
         verbose_name = 'Product'
         verbose_name_plural = 'Products'
+
+
+class Rating(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    rating = models.DecimalField(
+        max_digits=3, decimal_places=1,
+        default=0,
+        null=True,
+        validators=[MinValueValidator(0), MaxValueValidator(5)]
+    )
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
 
 
 class Category(models.Model):
@@ -159,7 +175,8 @@ class Cart(models.Model):
         related_name='carts',
     )
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
-    quantity = models.PositiveSmallIntegerField(default=1)
+    quantity = models.PositiveSmallIntegerField(
+        default=1, validators=[MinValueValidator(1)])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -196,6 +213,8 @@ class Order(models.Model):
     is_cancelled = models.BooleanField(null=True, blank=True, default=False)
     status = models.CharField(
         max_length=20, choices=ORDER_STATUS_CHOICES, default=PENDING)
+    stripe_checkout_session_id = models.CharField(
+        max_length=128, unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -222,7 +241,7 @@ class OrderItem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Order | {self.product} | {self.user}"
+        return f"Order | {self.product}"
 
     def get_product_name(self):
         return self.product.name
