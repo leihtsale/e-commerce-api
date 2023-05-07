@@ -66,7 +66,7 @@ def create_order_item(order, cart):
     )
 
 
-def create_order(user, shipping_info={}, billing_info={}):
+def create_order(user, shipping_info={}):
 
     if not shipping_info:
         shipping_info = {
