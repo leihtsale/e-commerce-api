@@ -4,6 +4,9 @@ from core.models import Cart, Order, OrderItem
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Order model
+    """
 
     cart_ids = serializers.ListField(
         child=serializers.IntegerField(),
@@ -15,7 +18,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id', 'user', 'cart_ids', 'shipping_info',
+            'id', 'user', 'cart_ids', 'shipping_info', 'stripe_checkout_session_id',
             'status', 'is_cancelled', 'total', 'created_at', 'updated_at']
         extra_kwargs = {
             'id': {'read_only': True},
@@ -28,6 +31,10 @@ class OrderSerializer(serializers.ModelSerializer):
         return instance.get_total()
 
     def _get_carts(self, cart_ids):
+        """
+        Helper function to validate if the cart exists,
+        if it exists, append the cart to the carts list
+        """
         carts = []
 
         for id in cart_ids:
@@ -46,6 +53,8 @@ class OrderSerializer(serializers.ModelSerializer):
         cart_ids = attrs.pop('cart_ids', [])
         carts = self._get_carts(cart_ids)
 
+        # Check if the requested cart quantity is less than the product inventory
+        # raise ValidationError if True
         for cart in carts:
             product = cart.product
             new_inventory = product.inventory - cart.quantity
@@ -86,6 +95,9 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
     def update(self, instance, validated_data):
+
+        # Checking if the order is canceled
+        # If cancelled, revert the product quantity and inventory
         if validated_data.get('is_cancelled', False):
             order_items = OrderItem.objects.filter(order=instance)
 
@@ -99,8 +111,10 @@ class OrderSerializer(serializers.ModelSerializer):
         return instance
 
 
-class OrderItemSerialzer(serializers.ModelSerializer):
-
+class OrderItemSerializer(serializers.ModelSerializer):
+    """
+    Serializer for items in Order
+    """
     product_name = serializers.SerializerMethodField('get_product_name')
     total = serializers.SerializerMethodField('get_total')
 
