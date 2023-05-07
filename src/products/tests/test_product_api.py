@@ -133,7 +133,7 @@ class PrivateProductApiTests(TestCase):
         initial_product_count = Product.objects.filter(user=self.user).count()
         payload = {
             'name': 'Generic product',
-            'price': 1,
+            'price': 55,
             'inventory': 1,
             'description': 'My description',
         }
@@ -154,7 +154,7 @@ class PrivateProductApiTests(TestCase):
         initial_products_count = Product.objects.filter(user=self.user).count()
         payload = {
             'name': 'Generic product',
-            'price': 1,
+            'price': 55,
             'inventory': 1,
             'description': 'My description',
             'categories': ['Tech'],
@@ -179,7 +179,7 @@ class PrivateProductApiTests(TestCase):
         """
         payload = {
             'name': 'Generic product',
-            'price': 1,
+            'price': 55,
             'inventory': 1,
             'description': 'My description',
             'categories': ['Tech'],
@@ -197,10 +197,10 @@ class PrivateProductApiTests(TestCase):
         """
         payload = {
             'name': 'Test product',
-            'price': 1,
+            'price': 55,
             'inventory': 1,
             'description': 'My description',
-            'rating': 1
+            'total_sold': 1
         }
         res = self.client.post(PRODUCTS_URL, payload)
 
@@ -214,7 +214,7 @@ class PrivateProductApiTests(TestCase):
         product = create_product(self.user)
         payload = {
             'name': 'New name',
-            'price': 10,
+            'price': 55,
             'inventory': 50,
             'description': 'New description'
         }

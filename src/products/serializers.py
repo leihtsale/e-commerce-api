@@ -4,6 +4,12 @@ from core.models import Category, Product
 
 
 class CategoryListField(serializers.RelatedField):
+    """
+    Categories list field for Product serializer
+    Modifying the to_internal_value to check if the category exists,
+    and return it the category
+    """
+
     def to_representation(self, value):
         return value.name
 
@@ -16,6 +22,9 @@ class CategoryListField(serializers.RelatedField):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Product
+    """
     categories = CategoryListField(
         queryset=Category.objects.all(), many=True, required=False)
 
@@ -23,14 +32,13 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'price', 'inventory', 'image',
-            'description', 'rating', 'total_sold',
+            'description', 'total_sold',
             'categories', 'created_at', 'updated_at']
         extra_kwargs = {
             'id': {'read_only': True},
             'image': {'read_only': True},
             'categories': {'read_only': True},
             'description': {'required': False, 'allow_blank': True},
-            'rating': {'read_only': True},
             'total_sold': {'read_only': True},
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True}

@@ -15,7 +15,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filterset_class = ProductFilter
     search_fields = ['name']
-    ordering_fields = ['price', 'total_sold', 'rating', 'created_at']
+    ordering_fields = ['price', 'total_sold', 'created_at']
 
     def get_queryset(self):
         return Product.objects.filter(user=self.request.user)
@@ -44,7 +44,7 @@ class PublicProductView(generics.ListAPIView):
     queryset = Product.objects.all()
     filterset_class = ProductFilter
     search_fields = ['name']
-    ordering_fields = ['price', 'total_sold', 'rating', 'created_at']
+    ordering_fields = ['price', 'total_sold', 'created_at']
 
 
 class PublicProductDetailView(generics.RetrieveAPIView):
